@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Announcements</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header Section -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div>
+        <h1>Event Announcements</h1>
+        <p class="tagline">Upcoming events, with email updates whenever a new one is posted.</p>
+      </div>
+      <button type="button" class="btn btn-light" onclick="subscribeToEvents()">Subscribe to Events</button>
+    </div>
+    <div class="container">
+      <p id="subscribe-status" class="form-status" role="status"></p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Events Section -->
+    <section class="panel" aria-labelledby="events-heading">
+      <div class="panel-head">
+        <h2 id="events-heading">Latest events</h2>
+        <button type="button" id="toggle-form-btn" class="btn btn-primary" onclick="toggleEventForm()">Create Event</button>
+      </div>
+
+      <!-- Create Event Form (hidden until the button above is clicked) -->
+      <form id="event-form" class="event-form" onsubmit="submitNewEvent(event)" hidden>
+        <label for="event-title">Title</label>
+        <input type="text" id="event-title" name="title" maxlength="120" required>
+
+        <label for="event-date">Date</label>
+        <input type="date" id="event-date" name="date" required>
+
+        <label for="event-description">Description</label>
+        <textarea id="event-description" name="description" rows="4" maxlength="1000" required></textarea>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Submit Event</button>
+          <button type="button" class="btn btn-ghost" onclick="toggleEventForm(false)">Cancel</button>
+        </div>
+        <p id="event-status" class="form-status" role="status"></p>
+      </form>
+
+      <ul id="events-list" class="events-list" aria-live="polite">
+        <li class="muted">Loading events…</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer muted">
+    Built with Amazon S3, API Gateway, Lambda and SNS.
+  </footer>
+
+  <script>
+    // API Gateway invoke URL (no trailing slash). scripts/deploy.sh fills this in automatically;
+    // for a manual setup, replace the placeholder with your API's invoke URL.
+    const API_BASE_URL = "__API_BASE_URL__";
+
+    // Fetches events.json from the same S3 site and renders it, newest date first.
+    async function loadEvents() {
+      const list = document.getElementById("events-list");
+      try {
+        // Cache-bust so a just-created event shows up immediately.
+        const res = await fetch("events.json?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const events = await res.json();
+
+        if (!Array.isArray(events) || events.length === 0) {
+          list.replaceChildren(listMessage("No events yet. Create the first one."));
+          return;
+        }
+        events.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+        list.replaceChildren(...events.map(renderEvent));
+      } catch (err) {
+        console.error("Failed to load events:", err);
+        list.replaceChildren(listMessage("Couldn't load events. Refresh the page to try again."));
+      }
+    }
+
+    // Sends the visitor's email to the backend, which subscribes it to the SNS topic.
+    async function subscribeToEvents() {
+      const input = prompt("Enter your email address to get notified about new events:");
+      if (input === null) return;  // cancelled
+      const email = input.trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        setStatus("subscribe-status", "That doesn't look like a valid email address.", "error");
+        return;
+      }
+
+      setStatus("subscribe-status", "Subscribing…");
+      try {
+        const data = await postJSON("/subscribe", { email });
+        setStatus("subscribe-status", data.message || "Check your inbox to confirm your subscription.", "success");
+      } catch (err) {
+        setStatus("subscribe-status", err.message, "error");
+      }
+    }
+
+    // Sends the new event to the backend, which appends it to events.json and notifies subscribers.
+    async function submitNewEvent(event) {
+      event.preventDefault();
+      const form = event.target;
+      const f = form.elements;  // form.title would return the form's own title attribute
+      const newEvent = {
+        title: f.title.value.trim(),
+        date: f.date.value,
+        description: f.description.value.trim(),
+      };
+      if (!newEvent.title || !newEvent.date || !newEvent.description) {
+        setStatus("event-status", "Fill in every field.", "error");
+        return;
+      }
+
+      const submitBtn = form.querySelector("button[type=submit]");
+      submitBtn.disabled = true;
+      setStatus("event-status", "Submitting…");
+      try {
+        const data = await postJSON("/create-event", newEvent);
+        form.reset();
+        setStatus("event-status", data.message || "Event created.", "success");
+        await loadEvents();
+      } catch (err) {
+        setStatus("event-status", err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    // ---------- helpers ----------
+
+    function toggleEventForm(show) {
+      const form = document.getElementById("event-form");
+      const btn = document.getElementById("toggle-form-btn");
+      form.hidden = show === undefined ? !form.hidden : !show;
+      btn.textContent = form.hidden ? "Create Event" : "Hide Form";
+      if (!form.hidden) form.elements.title.focus();
+      else setStatus("event-status", "");
+    }
+
+    async function postJSON(path, payload) {
+      if (!API_BASE_URL || API_BASE_URL.startsWith("__")) {
+        throw new Error("The API URL isn't configured yet (API_BASE_URL in index.html).");
+      }
+      const res = await fetch(API_BASE_URL + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (_) { /* non-JSON body */ }
+      if (!res.ok) throw new Error(data.error || data.message || "Request failed (HTTP " + res.status + ")");
+      return data;
+    }
+
+    // Built with textContent, never innerHTML, because event data is user-submitted.
+    function renderEvent(evt) {
+      const li = el("li", "event");
+      const d = parseDate(evt.date);
+
+      const dateBox = el("div", "event-date");
+      dateBox.append(
+        el("span", "month", d ? d.toLocaleString(undefined, { month: "short" }) : ""),
+        el("span", "day", d ? String(d.getDate()) : "?"),
+        el("span", "year", d ? String(d.getFullYear()) : "")
+      );
+
+      const body = el("div");
+      body.append(
+        el("h3", null, evt.title || "Untitled event"),
+        el("p", "event-meta", d ? d.toLocaleDateString(undefined, { dateStyle: "full" }) : String(evt.date || "")),
+        el("p", "description", evt.description || "")
+      );
+
+      li.append(dateBox, body);
+      return li;
+    }
+
+    // Parse YYYY-MM-DD as a local date so it doesn't shift by a day west of UTC.
+    function parseDate(str) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str || "");
+      return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+    }
+
+    function setStatus(id, text, kind) {
+      const node = document.getElementById(id);
+      node.textContent = text;
+      node.className = "form-status" + (kind ? " " + kind : "");
+    }
+
+    function listMessage(text) {
+      return el("li", "muted", text);
+    }
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    loadEvents();
+  </script>
+</body>
+</html>

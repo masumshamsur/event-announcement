@@ -1,0 +1,11 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SubscribeToEventTopic",
+      "Effect": "Allow",
+      "Action": "sns:Subscribe",
+      "Resource": "__TOPIC_ARN__"
+    }
+  ]
+}

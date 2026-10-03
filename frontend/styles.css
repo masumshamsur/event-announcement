@@ -1,0 +1,144 @@
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --text: #1c2430;
+  --muted: #5b6676;
+  --border: #dde2e8;
+  --accent: #0a6cbd;
+  --accent-hover: #08599c;
+  --header: #232f3e;
+  --success: #1d7a46;
+  --error: #b42318;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+[hidden] { display: none !important; }
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  background: var(--header);
+  color: #fff;
+  padding: 28px 0 12px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.site-header h1 { margin: 0 0 4px; font-size: 1.9rem; }
+.tagline { margin: 0; color: #c9d1dc; }
+.site-header .form-status.success { color: #7fd8a4; }
+.site-header .form-status.error { color: #ffb4a8; }
+
+/* ---------- Panels ---------- */
+main { padding-block: 28px; }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.panel-head h2 { margin: 0; font-size: 1.25rem; }
+.muted { color: var(--muted); font-size: 0.92rem; }
+
+/* ---------- Events ---------- */
+.events-list { list-style: none; margin: 0; padding: 0; }
+.event {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 18px;
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+.event:first-child { border-top: none; }
+.event-date {
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 0;
+  height: fit-content;
+}
+.event-date .month { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--accent); }
+.event-date .day { display: block; font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
+.event-date .year { display: block; font-size: 0.72rem; color: var(--muted); }
+.event h3 { margin: 0 0 2px; font-size: 1.08rem; }
+.event-meta { margin: 0 0 6px; color: var(--muted); font-size: 0.9rem; }
+.description { margin: 0; white-space: pre-line; }
+
+/* ---------- Create event form ---------- */
+.event-form {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0 16px;
+}
+label { font-weight: 600; font-size: 0.88rem; margin: 10px 0 4px; }
+label:first-of-type { margin-top: 0; }
+input, textarea {
+  font: inherit;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+}
+input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+textarea { resize: vertical; }
+.form-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 9px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.6; cursor: wait; }
+.btn-light { background: #ff9900; color: #1c2430; }
+.btn-light:hover { background: #ec8d00; }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+.btn-ghost:hover { background: var(--surface); }
+
+.form-status { min-height: 1.3em; margin: 8px 0 0; font-size: 0.9rem; }
+.form-status.success { color: var(--success); }
+.form-status.error { color: var(--error); }
+
+.site-footer { padding: 0 20px 32px; text-align: center; }
+
+@media (max-width: 560px) {
+  .event { grid-template-columns: 56px 1fr; gap: 12px; }
+  .site-header h1 { font-size: 1.5rem; }
+}

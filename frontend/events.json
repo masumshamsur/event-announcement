@@ -1,0 +1,16 @@
+[
+  {
+    "id": "seed-1",
+    "title": "AWS Community Meetup",
+    "date": "2026-11-12",
+    "description": "An evening of short talks on serverless architectures, followed by open Q&A. Online.",
+    "createdAt": "2026-10-01T00:00:00Z"
+  },
+  {
+    "id": "seed-2",
+    "title": "Cloud Practitioner Study Group",
+    "date": "2026-11-20",
+    "description": "Weekly study session for the AWS Certified Cloud Practitioner exam. Bring your questions.",
+    "createdAt": "2026-10-01T00:00:00Z"
+  }
+]
