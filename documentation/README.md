@@ -15,6 +15,8 @@ This folder documents every AWS resource in the Event Announcement project. Ther
 | 5 | **AWS IAM** | Controls which component may do what | 2 roles, 2 inline policies, Lambda invoke permissions, plus the bucket policy | [05-aws-iam.md](05-aws-iam.md) |
 | 6 | **Amazon CloudWatch Logs** | Records what each Lambda did, for debugging | 2 log groups (created automatically) | [06-amazon-cloudwatch-logs.md](06-amazon-cloudwatch-logs.md) |
 
+**Interview prep:** [07-interview-qna.md](07-interview-qna.md) has 50 likely interview questions about this project, with answers, plus quick-fire facts.
+
 ## How they work together
 
 **Viewing events:**

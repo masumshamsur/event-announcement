@@ -51,7 +51,7 @@ API Gateway closes that gap. It gives the browser a public HTTPS URL, and each p
 ## Limitations
 
 - **No authentication:** anyone with the URL can call both routes. In production, add a JWT authorizer (Cognito) to `/create-event`.
-- **No custom throttling:** the account-level defaults apply. In production, set stage throttling limits or add AWS WAF.
+- **No custom throttling:** the account-level defaults apply. In production, set stage throttling limits. AWS WAF can't attach to an HTTP API directly, so it would need CloudFront in front of the API, or a REST API.
 - **CORS allows any origin (`*`):** in production, restrict it to the site's domain.
 
 ## Cost

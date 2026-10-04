@@ -12,6 +12,17 @@ This project is a fully serverless website where visitors can:
 
 There are no servers to patch and nothing runs while the site is idle. Every component is a managed AWS service that bills per request, so a low-traffic site costs close to nothing.
 
+![Screenshot of the Event Announcements website](documentation/screenshot.png)
+
+### Highlights
+
+- **Fully serverless:** S3, API Gateway, Lambda and SNS, with no servers and no charges while idle.
+- **Safe concurrent writes:** `events.json` is updated with S3 conditional writes (`If-Match` on the ETag) and retries, so simultaneous submissions never overwrite each other.
+- **Least-privilege IAM:** a separate role per Lambda. Write access is limited to the single object `events.json`, and each function can be invoked only from its own API route.
+- **Repeatable deployment:** an idempotent AWS CLI script builds the whole stack and can be re-run safely, and a teardown script removes it.
+- **Tested:** unit tests for both Lambdas with fake S3 and SNS clients, including a simulated write conflict.
+- **Documented:** [one document per AWS service](documentation/), an [IAM access diagram](documentation/05-aws-iam.md#access-diagram), and [interview Q&A](documentation/07-interview-qna.md).
+
 ## Architecture
 
 ![Architecture diagram](documentation/architecture.png)
@@ -89,7 +100,9 @@ event-announcement/
     ├── 04-amazon-sns.md
     ├── 05-aws-iam.md
     ├── 06-amazon-cloudwatch-logs.md
-    └── architecture.png
+    ├── 07-interview-qna.md      # Likely interview questions about this project, with answers
+    ├── architecture.png
+    └── screenshot.png
 ```
 
 Each file in [documentation/](documentation/) explains what the resource is, why this project needs it, how it's configured, and how to inspect it.
@@ -283,7 +296,7 @@ What would change for production:
 1. **Infrastructure as Code:** replace the CLI script with Terraform or AWS SAM/CDK to get state tracking, drift detection and reviewable plans.
 2. **Database:** store events in DynamoDB instead of a JSON file, with an API to list events. This scales and allows queries such as upcoming events only.
 3. **Authentication:** protect `/create-event` with a Cognito JWT authorizer so only signed-in organizers can post. Add an approval step before notifications go out.
-4. **Abuse protection:** API Gateway throttling, AWS WAF rate-based rules, and CAPTCHA on the forms.
+4. **Abuse protection:** API Gateway throttling limits on the stage, and CAPTCHA on the forms. AWS WAF rate-based rules would also help, but WAF can't attach to an HTTP API directly. It needs CloudFront in front of the API, or a switch to a REST API.
 5. **HTTPS and a custom domain:** CloudFront with Origin Access Control in front of a private bucket, an ACM certificate and Route 53.
 6. **Restricted CORS:** allow only the site's own domain instead of `*`.
 7. **CI/CD:** the GitHub Actions pipeline described above, using OIDC.
